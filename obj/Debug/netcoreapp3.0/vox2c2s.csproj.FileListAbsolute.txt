@@ -1,0 +1,11 @@
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.exe
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.deps.json
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.runtimeconfig.json
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.runtimeconfig.dev.json
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.dll
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\bin\Debug\netcoreapp3.0\vox2c2s.pdb
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\obj\Debug\netcoreapp3.0\vox2c2s.csprojAssemblyReference.cache
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\obj\Debug\netcoreapp3.0\vox2c2s.AssemblyInfoInputs.cache
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\obj\Debug\netcoreapp3.0\vox2c2s.AssemblyInfo.cs
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\obj\Debug\netcoreapp3.0\vox2c2s.dll
+C:\Users\dhlru\Desktop\My files\code\vox2c2s\vox2c2s\obj\Debug\netcoreapp3.0\vox2c2s.pdb

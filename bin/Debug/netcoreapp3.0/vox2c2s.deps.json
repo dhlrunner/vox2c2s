@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.0": {
+      "vox2c2s/1.0.0": {
+        "runtime": {
+          "vox2c2s.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "vox2c2s/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
