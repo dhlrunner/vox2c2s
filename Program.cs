@@ -263,11 +263,6 @@ namespace vox2c2s
                     }
                 }
                 
-
-                bool laser_L = false;
-                int laserL_start = 0;
-                int laser_L_count = 0;
-                bool laser_R = false;
                 for (int i = 0; i < laserL_data.Count; i++)
                 {
                     string[] sp = laserL_data[i].Split('\t');
@@ -283,7 +278,6 @@ namespace vox2c2s
 
                     if (i < laserL_data.Count - 1)
                     {
-                        laser_L = true;
                         if (sp[2] != "2" && laserL_data[i + 1].Split('\t')[2] != "2")
                         {
                             string[] sp_2 = laserL_data[i + 1].Split('\t');
@@ -306,8 +300,13 @@ namespace vox2c2s
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted, flk_size));
                                 }
                             }
+                            
                             c2s_data.Add(string.Format("SLC\t{0}\t{1}\t{2}\t4\t{3}\t{4}\t4", beat - 1, offset * 2, laserconverted, long_length, laserconverted_end));
-                            //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\t{3}", beat - 1, offset * 2, laserconverted, long_length));
+                            if (long_length > 0)
+                            {
+                                //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\tSLC\t{3}", beat - 1, offset * 2, laserconverted, long_length));
+                            }
+                            
                         }
 
 
@@ -336,10 +335,14 @@ namespace vox2c2s
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted, flk_size));
                             }
                         }
+                        
                         c2s_data.Add(string.Format("SLD\t{0}\t{1}\t{2}\t4\t{3}\t{4}\t4", beat_1 - 1, offset_1 * 2, laserconverted_end, long_length, laserconverted));
+                        if (long_length > 0)
+                        {
+                            //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\tSLD\t{3}", beat_1 - 1, offset_1 * 2, laserconverted_end, long_length));
+                        }
                         //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\t{3}", beat - 1, offset * 2, laserconverted_end, long_length));
                         //i++;
-                        laser_L = false;
                     }
 
                 }
@@ -356,7 +359,6 @@ namespace vox2c2s
                     int long_length = 0;
                     if (i < laserR_data.Count - 1)
                     {
-                        laser_L = true;
                         if (sp[2] != "2" && laserR_data[i + 1].Split('\t')[2] != "2")
                         {
                             string[] sp_2 = laserR_data[i + 1].Split('\t');
@@ -379,10 +381,12 @@ namespace vox2c2s
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted, flk_size));
                                 }                                    
                             }
+                            
                             c2s_data.Add(string.Format("SLC\t{0}\t{1}\t{2}\t4\t{3}\t{4}\t4", beat - 1, offset * 2, laserconverted, long_length, laserconverted_end));
-                            //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\t{3}", beat - 1, offset * 2, laserconverted, long_length));
-                            // i++;
-                            laser_L = false;
+                            if (long_length > 0)
+                            {
+                                //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\tSLC\t{3}", beat - 1, offset * 2, laserconverted, long_length));
+                            }                          
                         }
 
                     }
@@ -409,8 +413,13 @@ namespace vox2c2s
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted, flk_size));
                             }
                         }
+                        
                         c2s_data.Add(string.Format("SLD\t{0}\t{1}\t{2}\t4\t{3}\t{4}\t4", beat_1 - 1, offset_1 * 2, laserconverted_end, long_length, laserconverted));
-                        //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\t{3}", beat - 1, offset * 2, laserconverted_end, long_length));
+                        if(long_length > 0)
+                        {
+                            //c2s_data.Add(string.Format("AHD\t{0}\t{1}\t{2}\t4\tSLD\t{3}", beat_1 - 1, offset_1 * 2, laserconverted_end, long_length));
+                        }
+                       
                     }
                 }
                 int laser_conv(int sd)
