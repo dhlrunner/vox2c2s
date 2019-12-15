@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "vox2c2s": {
+      "commandName": "Project",
+      "commandLineArgs": "003_0551_frestorm_etia_3e.vox"
+    }
+  }
+}
