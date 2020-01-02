@@ -8,7 +8,7 @@ namespace vox2c2s
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             if(args.Length > 0)
             {
@@ -19,7 +19,7 @@ namespace vox2c2s
                 {
                     for (int i = 0; i < args.Length; i++)
                     {
-                        if (args[i] == "-c")
+                        if (args[i].Equals("-c",StringComparison.OrdinalIgnoreCase))
                         {
                             creator = args[i + 1];
                         }
@@ -29,7 +29,7 @@ namespace vox2c2s
                 {
                     Console.WriteLine("Error: invalid parameter");
                     showUsage();
-                    return;
+                    return -1;
                 }
                
                 string[] rawvox = File.ReadAllLines(infilename);
@@ -45,6 +45,8 @@ namespace vox2c2s
                 List<string> beat_data = new List<string>();
                 List<string> c2s_data = new List<string>();
                 List<string> c2s_header = new List<string>();
+
+                #region readVox
                 for (int i = 0; i < rawvox.Length; i++)
                 {
                     if (rawvox[i] == "#BEAT INFO")
@@ -68,8 +70,8 @@ namespace vox2c2s
                         bpm_data.RemoveAt(0);
                         bpm_data.RemoveAt(bpm_data.Count - 1);
                     }
-
-                    if (rawvox[i] == "#TRACK1")
+                    
+                        if (rawvox[i] == "#TRACK1")
                     {
                         for (int k = i; ; k++)
                         {
@@ -150,22 +152,57 @@ namespace vox2c2s
                         laserR_data.RemoveAt(laserR_data.Count - 1);
                     }
                 }
+                #endregion
 
+                if (!Convert.ToBoolean(bpm_data.Count))
+                {
+                    Console.WriteLine("Error: Can't find any bpm info from input vox file.");
+                    return -1;
+                }
+                if (!Convert.ToBoolean(beat_data.Count))
+                {
+                    Console.WriteLine("Error: Can't find any beat info from input vox file.");
+                    return -1;
+                }
+                //--------------------Add c2s Header start
                 c2s_header.Add("VERSION\t1.07.00\t1.07.00");
                 c2s_header.Add("MUSIC\t0");
                 c2s_header.Add("SEQUENCEID\t0");
                 c2s_header.Add("DIFFICULT\t00");
                 c2s_header.Add("LEVEL\t0.0");
-                c2s_header.Add("CREATOR\t"+creator);                
+                c2s_header.Add("CREATOR\t"+creator);
+                StringBuilder bpm_def = new StringBuilder();
+                string lastbpm = bpm_data[0].Split('\t')[1];
+                for (int i=0; i<4; i++)
+                {
+                    string b = "";
+                    try
+                    {
+                        b = bpm_data[i].Split('\t')[1];
+                        bpm_def.Append((i <= 3 ? "\t" : "") + b);
+                        lastbpm = bpm_data[i].Split('\t')[1];
+                    }
+                    catch (ArgumentOutOfRangeException)
+                    {
+                        bpm_def.Append((i <= 3 ? "\t" : "") + lastbpm);
+                    }
+                }
+                
+                c2s_header.Add("BPM_DEF"+bpm_def.ToString());
+                c2s_header.Add(string.Format("MET_DEF\t{0}\t{1}",beat_data[0].Split('\t')[2],beat_data[0].Split('\t')[1]));
+                //c2s_header.Add("MET_DEF\t4\t4");
                 c2s_header.Add("RESOLUTION\t384");
-                c2s_header.Add("CLK_DEF\t384");
+                c2s_header.Add(string.Format("CLK_DEF\t{0}",Convert.ToDouble(beat_data[0].Split('\t')[1]) / Convert.ToDouble(beat_data[0].Split('\t')[2]) * 384));
                 c2s_header.Add("PROGJUDGE_BPM\t240.000");
-                c2s_header.Add("PROGJUDGE_AER\t0.999");
+                c2s_header.Add("PROGJUDGE_AER\t  0.999");
                 c2s_header.Add("TUTORIAL\t0");
                 c2s_header.Add("");
+                //------------------------Add c2s Header end
+
 
                 foreach (string line in bpm_data)
                 {
+                    
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
                     //double bpm = double.Parse(sp[1]);
@@ -190,10 +227,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32( (Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -208,10 +247,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -226,10 +267,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -244,10 +287,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -262,10 +307,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -282,10 +329,12 @@ namespace vox2c2s
                 {
                     string[] sp = line.Split('\t');
                     string[] pos = sp[0].Split(',');
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = int.Parse(sp[1]);
                     if (long_length <= 0)
                     {
@@ -304,11 +353,14 @@ namespace vox2c2s
                     string[] sp = laserL_data[i].Split('\t');
                     string[] pos = sp[0].Split(',');
 
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
+
                     int laserconverted = laser_conv(int.Parse(sp[1]));
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = 0;
 
 
@@ -318,21 +370,29 @@ namespace vox2c2s
                         {
                             string[] sp_2 = laserL_data[i + 1].Split('\t');
                             string[] pos_2 = sp_2[0].Split(',');
+
+                            int[] currentbeat_2 = getcurrentbeatinfo(sp[0]);
+                            int tick_in_current_beat_2 = Convert.ToInt32((Convert.ToDouble(currentbeat_2[0]) / Convert.ToDouble(currentbeat_2[1])) * 192);
+                            int bar_split_tick = tick_in_current_beat_2 / currentbeat_2[0];
+
                             int laserconverted_end = laser_conv(int.Parse(sp_2[1]));
                             int beat_1 = int.Parse(pos_2[0]);
                             int bar_1 = int.Parse(pos_2[1]);
                             int tick_1 = int.Parse(pos_2[2]);
-                            long_length = (((beat_1 - beat) * 192) + ((bar_1 - bar) * 48) + (tick_1 - tick)) * 2;
+                            long_length = (((beat_1 - beat) * tick_in_current_beat_2) + ((bar_1 - bar) * bar_split_tick) + (tick_1 - tick)) * 2;
+
                             if (long_length == 0)
                             {
                                 int flk_size = 0;
-                                flk_size = laserconverted + laserconverted_end + 4;
+                                
                                 if (laserconverted > laserconverted_end)
                                 {
+                                    flk_size = laserconverted - laserconverted_end + 4;
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted_end, flk_size));
                                 }
                                 else if (laserconverted < laserconverted_end)
                                 {
+                                    flk_size = laserconverted_end - laserconverted + 4;
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted, flk_size));
                                 }
                             }
@@ -352,22 +412,29 @@ namespace vox2c2s
                     {
                         string[] sp_2 = laserL_data[i - 1].Split('\t');
                         string[] pos_2 = sp_2[0].Split(',');
+
+                        int[] currentbeat_2 = getcurrentbeatinfo(sp[0]);
+                        int tick_in_current_beat_2 = Convert.ToInt32((Convert.ToDouble(currentbeat_2[0]) / Convert.ToDouble(currentbeat_2[1])) * 192);
+                        int bar_split_tick = tick_in_current_beat_2 / currentbeat_2[0];
+
                         int laserconverted_end = laser_conv(int.Parse(sp_2[1]));
                         int beat_1 = int.Parse(pos_2[0]);
                         int bar_1 = int.Parse(pos_2[1]);
                         int tick_1 = int.Parse(pos_2[2]);
-                        long_length = (((beat - beat_1) * 192) + ((bar - bar_1) * 48) + (tick - tick_1)) * 2;
+
+                        long_length = (((beat - beat_1) * tick_in_current_beat_2) + ((bar - bar_1) * bar_split_tick) + (tick - tick_1)) * 2;
                         int offset_1 = ((bar_1 - 1) * 48) + tick_1;
                         if (long_length == 0)
                         {
                             int flk_size = 0;
-                            flk_size = laserconverted + laserconverted_end + 4;
                             if(laserconverted > laserconverted_end)
                             {
+                                flk_size = laserconverted - laserconverted_end + 4;
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted_end, flk_size));
                             }
                             else if (laserconverted < laserconverted_end)
                             {
+                                flk_size =  laserconverted_end- laserconverted+ 4;
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted, flk_size));
                             }
                         }
@@ -382,16 +449,20 @@ namespace vox2c2s
                     }
 
                 }
+                
                 for (int i = 0; i < laserR_data.Count; i++)
                 {
                     string[] sp = laserR_data[i].Split('\t');
                     string[] pos = sp[0].Split(',');
 
+                    int[] currentbeat = getcurrentbeatinfo(sp[0]);
+                    int tick_in_current_beat = Convert.ToInt32((Convert.ToDouble(currentbeat[0]) / Convert.ToDouble(currentbeat[1])) * 192);
+
                     int laserconverted = laser_conv(int.Parse(sp[1]));
                     int beat = int.Parse(pos[0]);
                     int bar = int.Parse(pos[1]);
                     int tick = int.Parse(pos[2]);
-                    int offset = ((bar - 1) * 48) + tick;
+                    int offset = ((bar - 1) * tick_in_current_beat / currentbeat[0]) + tick;
                     int long_length = 0;
                     if (i < laserR_data.Count - 1)
                     {
@@ -399,21 +470,28 @@ namespace vox2c2s
                         {
                             string[] sp_2 = laserR_data[i + 1].Split('\t');
                             string[] pos_2 = sp_2[0].Split(',');
+
+                            int[] currentbeat_2 = getcurrentbeatinfo(sp[0]);
+                            int tick_in_current_beat_2 = Convert.ToInt32((Convert.ToDouble(currentbeat_2[0]) / Convert.ToDouble(currentbeat_2[1])) * 192);
+                            int bar_split_tick = tick_in_current_beat_2 / currentbeat_2[0];
+
                             int laserconverted_end = laser_conv(int.Parse(sp_2[1]));
                             int beat_1 = int.Parse(pos_2[0]);
                             int bar_1 = int.Parse(pos_2[1]);
                             int tick_1 = int.Parse(pos_2[2]);
-                            long_length = (((beat_1 - beat) * 192) + ((bar_1 - bar) * 48) + (tick_1 - tick)) * 2;
+                            long_length = (((beat_1 - beat) * tick_in_current_beat_2) + ((bar_1 - bar) * bar_split_tick) + (tick_1 - tick)) * 2;
                             if (long_length == 0)
                             {
                                 int flk_size = 0;
-                                flk_size = laserconverted + laserconverted_end + 4;
+                               
                                 if (laserconverted > laserconverted_end)
                                 {
+                                    flk_size = laserconverted - laserconverted_end + 4;
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted_end, flk_size));
                                 }
                                 else if (laserconverted < laserconverted_end)
                                 {
+                                    flk_size = laserconverted_end - laserconverted + 4;
                                     c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat - 1, offset * 2, laserconverted, flk_size));
                                 }                                    
                             }
@@ -430,22 +508,29 @@ namespace vox2c2s
                     {
                         string[] sp_2 = laserR_data[i - 1].Split('\t');
                         string[] pos_2 = sp_2[0].Split(',');
+
+                        int[] currentbeat_2 = getcurrentbeatinfo(sp[0]);
+                        int tick_in_current_beat_2 = Convert.ToInt32((Convert.ToDouble(currentbeat_2[0]) / Convert.ToDouble(currentbeat_2[1])) * 192);
+                        int bar_split_tick = tick_in_current_beat_2 / currentbeat_2[0];
+
                         int laserconverted_end = laser_conv(int.Parse(sp_2[1]));
                         int beat_1 = int.Parse(pos_2[0]);
                         int bar_1 = int.Parse(pos_2[1]);
                         int tick_1 = int.Parse(pos_2[2]);
                         int offset_1 = ((bar_1 - 1) * 48) + tick_1;
-                        long_length = (((beat - beat_1) * 192) + ((bar - bar_1) * 48) + (tick - tick_1)) * 2;
+                        long_length = (((beat - beat_1) * tick_in_current_beat_2) + ((bar - bar_1) * bar_split_tick) + (tick - tick_1)) * 2;
                         if (long_length == 0)
                         {
                             int flk_size = 0;
-                            flk_size = laserconverted + laserconverted_end + 4;
+
                             if (laserconverted > laserconverted_end)
                             {
+                                flk_size = laserconverted - laserconverted_end + 4;
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted_end, flk_size));
                             }
                             else if (laserconverted < laserconverted_end)
                             {
+                                flk_size = laserconverted_end - laserconverted + 4;
                                 c2s_data.Add(string.Format("FLK\t{0}\t{1}\t{2}\t{3}", beat_1 - 1, offset_1 * 2, laserconverted, flk_size));
                             }
                         }
@@ -462,6 +547,24 @@ namespace vox2c2s
                 {
                     return (int)Math.Round(sd * 0.0944);
                 }
+                int[] getcurrentbeatinfo(string pos)
+                {
+                    string[] p = pos.Split(',');
+                    int[] beat_r = null;
+                    int[] pos_int = new int[] {int.Parse(p[0]), int.Parse(p[1]), int.Parse(p[2]) };
+                    for(int i=beat_data.Count -1; i >= 0; i--) { 
+                        string[] k = beat_data[i].Split('\t')[0].Split(',');
+                        int[] pos_data_int = new int[] { int.Parse(k[0]), int.Parse(k[1]), int.Parse(k[2]) };
+                        if (pos_int[0] >= pos_data_int[0])
+                        {
+                            beat_r = new int[2];
+                            beat_r[0] = int.Parse(beat_data[i].Split('\t')[1]);
+                            beat_r[1] = int.Parse(beat_data[i].Split('\t')[2]);
+                            return beat_r;
+                        }                      
+                    }
+                    return beat_r;
+                }
                 File.WriteAllLines(outfilename, c2s_header.Concat(c2s_data));
                 Console.WriteLine(string.Format("file {0} has been saved",outfilename));
             }
@@ -470,11 +573,14 @@ namespace vox2c2s
                 Console.WriteLine("Error: No input file was specified.");
                 showUsage();
             }
+            return 0;
         }
         static void showUsage()
         {
             Console.WriteLine("Usage: vox2c2s.exe <input> -options <parameter>" + Environment.NewLine + "list options :" + Environment.NewLine
                     + " -c <Creater name>  set a chart creater name.");
+            
         }
+        
     }
 }
